@@ -1,0 +1,76 @@
+﻿@using Calculator.WebApp.Models.Calculator
+@model CalculatorModel
+
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Calculadora</h1>
+
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <form asp-action="Calculate" method="post" class="card p-4 shadow">
+                <div class="mb-3">
+                    <label asp-for="Number1" class="form-label">Primer Número</label>
+                    <input asp-for="Number1" class="form-control" type="number" />
+                    <span asp-validation-for="Number1" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Operation" class="form-label">Operación</label>
+                    <select asp-for="Operation" class="form-select">
+                        <option value="Addition">Suma (+)</option>
+                        <option value="Subtraction">Resta (-)</option>
+                        <option value="Multiplication">Multiplicación (*)</option>
+                        <option value="Division">División (/)</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Number2" class="form-label">Segundo Número</label>
+                    <input asp-for="Number2" class="form-control" type="number" />
+                    <span asp-validation-for="Number2" class="text-danger"></span>
+                </div>
+
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">Calcular</button>
+                </div>
+
+                @if (Model?.Result != null)
+                {
+                    <div class="alert alert-success mt-3">
+                        <h4 class="alert-heading">Resultado</h4>
+                        <p>@Model.Number1 @GetOperationSymbol(Model.Operation) @Model.Number2 = @Model.Result</p>
+                    </div>
+                }
+
+                @if (ViewData.ModelState.ErrorCount > 0)
+                {
+                    <div class="alert alert-danger mt-3">
+                        <h4 class="alert-heading">Error</h4>
+                        <div asp-validation-summary="All"></div>
+                    </div>
+                }
+            </form>
+        </div>
+    </div>
+</div>
+
+@functions {
+    string GetOperationSymbol(string operation)
+    {
+        return operation switch
+        {
+            "Addition" => "+",
+            "Subtraction" => "-",
+            "Multiplication" => "*",
+            "Division" => "/",
+            _ => "?"
+        };
+    }
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
