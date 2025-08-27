@@ -5,11 +5,11 @@ VisualStudioVersion = 17.8.34330.188
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{D3FD9A4B-83E1-484F-8873-F1EFD5C3F161}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calculator.WebApp", "Calculator.WebApp\Calculator.WebApp.csproj", "{C5C7589C-721D-4580-B5A1-8278A1C8DCA9}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{F2A7FBA8-727A-459E-A429-01C2D68A52F7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calculator.WebApp.Test", "Calculator.WebApp.Test\Calculator.WebApp.Test.csproj", "{535CC220-EC07-4814-8DA3-591B396F0DF8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UNIR.TFE.Monorepo.WebApp", "src\UNIR.TFE.Monorepo.WebApp\UNIR.TFE.Monorepo.WebApp.csproj", "{36DA8B3F-5D84-5D4A-3BE8-84F12BB35318}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UNIR.TFE.Monorepo.WebApp.Test", "test\UNIR.TFE.Monorepo.WebApp.Test\UNIR.TFE.Monorepo.WebApp.Test.csproj", "{544205E5-9B36-BD66-0812-6419E0BA17D9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,21 +17,21 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{C5C7589C-721D-4580-B5A1-8278A1C8DCA9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C5C7589C-721D-4580-B5A1-8278A1C8DCA9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C5C7589C-721D-4580-B5A1-8278A1C8DCA9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C5C7589C-721D-4580-B5A1-8278A1C8DCA9}.Release|Any CPU.Build.0 = Release|Any CPU
-		{535CC220-EC07-4814-8DA3-591B396F0DF8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{535CC220-EC07-4814-8DA3-591B396F0DF8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{535CC220-EC07-4814-8DA3-591B396F0DF8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{535CC220-EC07-4814-8DA3-591B396F0DF8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{36DA8B3F-5D84-5D4A-3BE8-84F12BB35318}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{36DA8B3F-5D84-5D4A-3BE8-84F12BB35318}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{36DA8B3F-5D84-5D4A-3BE8-84F12BB35318}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{36DA8B3F-5D84-5D4A-3BE8-84F12BB35318}.Release|Any CPU.Build.0 = Release|Any CPU
+		{544205E5-9B36-BD66-0812-6419E0BA17D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{544205E5-9B36-BD66-0812-6419E0BA17D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{544205E5-9B36-BD66-0812-6419E0BA17D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{544205E5-9B36-BD66-0812-6419E0BA17D9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{C5C7589C-721D-4580-B5A1-8278A1C8DCA9} = {D3FD9A4B-83E1-484F-8873-F1EFD5C3F161}
-		{535CC220-EC07-4814-8DA3-591B396F0DF8} = {F2A7FBA8-727A-459E-A429-01C2D68A52F7}
+		{36DA8B3F-5D84-5D4A-3BE8-84F12BB35318} = {D3FD9A4B-83E1-484F-8873-F1EFD5C3F161}
+		{544205E5-9B36-BD66-0812-6419E0BA17D9} = {F2A7FBA8-727A-459E-A429-01C2D68A52F7}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {2CFBEAF7-3CC3-4FF2-A578-BD356CAEEB7D}
