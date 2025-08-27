@@ -1,7 +1,7 @@
-using Calculator.WebApp.Services;
-using Calculator.WebApp.Services.Impl;
+using UNIR.TFE.Monorepo.WebApp.Services;
+using UNIR.TFE.Monorepo.WebApp.Services.Impl;
 
-namespace Calculator.WebApp.Test
+namespace UNIR.TFE.Monorepo.WebApp.Test
 {
     public class CalculatorServiceTests
     {

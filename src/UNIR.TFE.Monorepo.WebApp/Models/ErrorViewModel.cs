@@ -1,4 +1,4 @@
-namespace Calculator.WebApp.Models
+namespace UNIR.TFE.Monorepo.WebApp.Models
 {
     public class ErrorViewModel
     {

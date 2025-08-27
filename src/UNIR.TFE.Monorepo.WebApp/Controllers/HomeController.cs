@@ -1,10 +1,10 @@
-using Calculator.WebApp.Models;
-using Calculator.WebApp.Models.Calculator;
-using Calculator.WebApp.Services;
+using UNIR.TFE.Monorepo.WebApp.Models;
+using UNIR.TFE.Monorepo.WebApp.Models.Calculator;
+using UNIR.TFE.Monorepo.WebApp.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 
-namespace Calculator.WebApp.Controllers
+namespace UNIR.TFE.Monorepo.WebApp.Controllers
 {
     public class HomeController(
         ICalculatorService calculatorService, 

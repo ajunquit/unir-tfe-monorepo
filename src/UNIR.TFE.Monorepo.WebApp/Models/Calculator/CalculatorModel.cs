@@ -1,4 +1,4 @@
-﻿namespace Calculator.WebApp.Models.Calculator
+﻿namespace UNIR.TFE.Monorepo.WebApp.Models.Calculator
 {
     public class CalculatorModel
     {

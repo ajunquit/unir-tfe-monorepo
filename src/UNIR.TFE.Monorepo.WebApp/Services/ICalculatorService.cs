@@ -1,4 +1,4 @@
-﻿namespace Calculator.WebApp.Services
+﻿namespace UNIR.TFE.Monorepo.WebApp.Services
 {
     public interface ICalculatorService
     {

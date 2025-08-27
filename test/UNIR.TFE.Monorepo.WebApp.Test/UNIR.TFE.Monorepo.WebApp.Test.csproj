@@ -22,4 +22,8 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\UNIR.TFE.Monorepo.WebApp\UNIR.TFE.Monorepo.WebApp.csproj" />
+  </ItemGroup>
+
 </Project>

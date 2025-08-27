@@ -1,5 +1,5 @@
-using Calculator.WebApp.Services;
-using Calculator.WebApp.Services.Impl;
+using UNIR.TFE.Monorepo.WebApp.Services;
+using UNIR.TFE.Monorepo.WebApp.Services.Impl;
 
 var builder = WebApplication.CreateBuilder(args);
 
