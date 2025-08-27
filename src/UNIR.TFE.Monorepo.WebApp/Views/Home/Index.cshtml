@@ -1,4 +1,4 @@
-﻿@using UNIR.TFE.Monorepo.WebApp.Models.Calculator
+﻿﻿@using UNIR.TFE.Monorepo.WebApp.Models.Common
 @model CalculatorModel
 
 @{
@@ -55,6 +55,82 @@
             </form>
         </div>
     </div>
+
+    <!-- Sección para mostrar la información de Git -->
+    @if (Model?.GitModel != null)
+    {
+        <div class="row justify-content-center mt-5">
+            <div class="col-md-10">
+                <div class="card shadow">
+                    <div class="card-header bg-light">
+                        <h3 class="card-title">Información del Repositorio Git</h3>
+                    </div>
+                    <div class="card-body">
+                        @if (Model.GitModel.Superproject != null)
+                        {
+                            <div class="mb-4">
+                                <h4>Superproyecto</h4>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered">
+                                        <tr>
+                                            <th>Nombre</th>
+                                            <td>@Model.GitModel.Superproject.Path</td>
+                                        </tr>
+                                        <tr>
+                                            <th>URL</th>
+                                            <td>@Model.GitModel.Superproject.Url</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Commit</th>
+                                            <td>@Model.GitModel.Superproject.Sha</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Ruta</th>
+                                            <td>@Model.GitModel.Superproject.Path</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        }
+
+                        @if (Model.GitModel.Submodules != null && Model.GitModel.Submodules.Any())
+                        {
+                            <div>
+                                <h4>Submódulos</h4>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Nombre</th>
+                                                <th>URL</th>
+                                                <th>Commit</th>
+                                                <th>Ruta</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var submodule in Model.GitModel.Submodules)
+                                            {
+                                                <tr>
+                                                    <td>@submodule.Path</td>
+                                                    <td>@submodule.Url</td>
+                                                    <td>@submodule.Sha</td>
+                                                    <td>@submodule.Path</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-info">No hay submódulos disponibles.</div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 </div>
 
 @functions {

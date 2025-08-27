@@ -1,12 +1,19 @@
+using UNIR.TFE.Monorepo.WebApp.Infrastructure.External.GitHub;
+using UNIR.TFE.Monorepo.WebApp.Infrastructure.External.GitHub.Impl;
 using UNIR.TFE.Monorepo.WebApp.Services;
 using UNIR.TFE.Monorepo.WebApp.Services.Impl;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddScoped<ICalculatorService, CalculatorService>();
-
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+builder.Services.AddScoped<ICalculatorService, CalculatorService>();
+builder.Services.AddScoped<IGitRepositoryAnalyzerService, GitRepositoryAnalyzerService>();
+builder.Services.AddScoped<IGitHubRepositoryService, GitHubRepositoryService>();
+builder.Services.AddScoped<IGitHubUrlParser, GitHubUrlParser>();
+
+builder.Services.AddHttpClient();
 
 var app = builder.Build();
 

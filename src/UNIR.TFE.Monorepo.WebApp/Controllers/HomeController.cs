@@ -1,22 +1,30 @@
-using UNIR.TFE.Monorepo.WebApp.Models;
-using UNIR.TFE.Monorepo.WebApp.Models.Calculator;
-using UNIR.TFE.Monorepo.WebApp.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
+using UNIR.TFE.Monorepo.WebApp.Infrastructure.External.GitHub;
+using UNIR.TFE.Monorepo.WebApp.Models;
+using UNIR.TFE.Monorepo.WebApp.Models.Common;
+using UNIR.TFE.Monorepo.WebApp.Services;
 
 namespace UNIR.TFE.Monorepo.WebApp.Controllers
 {
     public class HomeController(
-        ICalculatorService calculatorService, 
-        ILogger<HomeController> logger) : Controller
+        ICalculatorService calculatorService,
+        ILogger<HomeController> logger,
+        IGitRepositoryAnalyzerService gitRepositoryAnalyzerService,
+        IConfiguration configuration
+        ) : Controller
     {
-        private readonly ILogger<HomeController> _logger = logger;
         private readonly ICalculatorService _calculatorService = calculatorService;
-        public CalculatorModel _calculatorModel { get; set; }
+        private readonly ILogger<HomeController> _logger = logger;
+        private readonly IGitRepositoryAnalyzerService _gitRepositoryAnalyzerService = gitRepositoryAnalyzerService;
+        private readonly IConfiguration _configuration = configuration;
 
-        public IActionResult Index()
+        public CalculatorModel CalculatorModel { get; set; } = new();
+
+        public async Task<IActionResult> Index()
         {
-            return View(new CalculatorModel());
+            await LoadGitRepositoryInfo();
+            return View(CalculatorModel);
         }
 
         public IActionResult Privacy()
@@ -27,30 +35,61 @@ namespace UNIR.TFE.Monorepo.WebApp.Controllers
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            return View(new ErrorViewModel
+            {
+                RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
+            });
         }
 
         [HttpPost]
-        public IActionResult Calculate(CalculatorModel model)
+        public async Task<IActionResult> Calculate(CalculatorModel model)
         {
             try
             {
-                model.Result = model.Operation switch
-                {
-                    "Addition" => _calculatorService.Addition(model.Number1, model.Number2),
-                    "Subtraction" => _calculatorService.Subtraction(model.Number1, model.Number2),
-                    "Multiplication" => _calculatorService.Multiplication(model.Number1, model.Number2),
-                    "Division" => _calculatorService.Division(model.Number1, model.Number2),
-                    _ => throw new InvalidOperationException("Operación no válida")
-                };
+                model.Result = CalculateOperation(model);
+                await LoadGitRepositoryInfo(model);
+                _logger.LogInformation("Operation completed successfully.");
             }
             catch (Exception ex)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
-                _logger.LogError(ex, "Error en cálculo");
+                HandleCalculationError(ex);
             }
 
             return View("Index", model);
+        }
+
+        private decimal CalculateOperation(CalculatorModel model)
+        {
+            return model.Operation switch
+            {
+                "Addition" => _calculatorService.Addition(model.Number1, model.Number2),
+                "Subtraction" => _calculatorService.Subtraction(model.Number1, model.Number2),
+                "Multiplication" => _calculatorService.Multiplication(model.Number1, model.Number2),
+                "Division" => _calculatorService.Division(model.Number1, model.Number2),
+                _ => throw new InvalidOperationException("Invalid operation")
+            };
+        }
+
+        private async Task LoadGitRepositoryInfo(CalculatorModel model = null)
+        {
+            var gitModel = await _gitRepositoryAnalyzerService.AnalyzeRepositoryAsync(
+                _configuration.GetValue<string>("Git:Superproject")!,
+                _configuration.GetValue<string>("Git:Branch")!);
+
+            if (model == null)
+            {
+                CalculatorModel.GitModel = gitModel;
+            }
+            else
+            {
+                model.GitModel = gitModel;
+            }
+        }
+
+        private void HandleCalculationError(Exception ex)
+        {
+            ModelState.AddModelError(string.Empty, ex.Message);
+            _logger.LogError(ex, "Calculation error");
         }
     }
 }

@@ -2,12 +2,12 @@
 {
     public class CalculatorService : ICalculatorService
     {
-        public int Addition(int a, int b)
+        public decimal Addition(decimal a, decimal b)
         {
             return a + b;
         }
 
-        public int Division(int a, int b)
+        public decimal Division(decimal a, decimal b)
         {
             if (b==0)
             {
@@ -16,12 +16,12 @@
             return a / b;
         }
 
-        public int Multiplication(int a, int b)
+        public decimal Multiplication(decimal a, decimal b)
         {
             return a * b;
         }
 
-        public int Subtraction(int a, int b)
+        public decimal Subtraction(decimal a, decimal b)
         {
             return a - b;
         }

@@ -2,9 +2,9 @@
 {
     public interface ICalculatorService
     {
-        int Addition(int a, int b);
-        int Subtraction(int a, int b);
-        int Multiplication(int a, int b);
-        int Division(int a, int b);
+        decimal Addition(decimal a, decimal b);
+        decimal Subtraction(decimal a, decimal b);
+        decimal Multiplication(decimal a, decimal b);
+        decimal Division(decimal a, decimal b);
     }
 }
