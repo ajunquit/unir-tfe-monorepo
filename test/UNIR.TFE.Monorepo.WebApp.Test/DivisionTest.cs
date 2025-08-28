@@ -16,11 +16,8 @@ namespace UNIR.TFE.Monorepo.WebApp.Test
             _sut = new CalculatorService();
         }
 
-        // ---------------------------
-        // Básicos (opcionales; quítalos si quieres EXACTAMENTE 10 000 en total)
-        // ---------------------------
         [Fact]
-        public void Division_ShouldThrow_OnDivideByZero()
+        public void Execute_ShouldThrow_OnDivideByZero()
         {
             Assert.Throws<DivideByZeroException>(() => _sut.Division(1, 0));
             Assert.Throws<DivideByZeroException>(() => _sut.Division(0, 0));
