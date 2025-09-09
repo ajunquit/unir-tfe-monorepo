@@ -4,7 +4,7 @@ on:
   workflow_run:
     workflows: [ "ci-default" ]
     types: [ completed ]
-    branches: [ "main" ]  # asegura que sólo despliegue si el CI vino de main
+    branches: [ "master" ]  # asegura que sólo despliegue si el CI vino de master
 
 permissions:
   contents: read
@@ -14,7 +14,7 @@ env:
   AZURE_WEBAPP_PACKAGE_PATH: '.'
 
 concurrency:
-  group: deploy-${{ github.ref || github.event.workflow_run.head_branch || 'main' }}
+  group: deploy-${{ github.ref || github.event.workflow_run.head_branch || 'master' }}
   cancel-in-progress: true
 
 jobs:
