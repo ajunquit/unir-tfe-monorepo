@@ -1,0 +1,87 @@
+name: ci-default
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  repository_dispatch:
+    types: [ trigger-white-label-pipeline ]
+
+permissions:
+  contents: read
+  packages: read
+
+env:
+  DOTNET_VERSION: '8.x'
+
+jobs:
+  build_test_publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          source-url: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+        env:
+          NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Restore
+        run: |
+          dotnet restore \
+            --source "https://api.nuget.org/v3/index.json" \
+            --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test --configuration Release --no-build --verbosity normal
+
+      - name: Publish
+        run: dotnet publish -c Release -o ${{ github.workspace }}/publish
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: net-app
+          path: ${{ github.workspace }}/publish
+          if-no-files-found: error
+          
+      # --- si viene del white-label, empaqueta metadata para el CD ---
+      - name: Export deploy metadata (only for repository_dispatch)
+        if: ${{ github.event_name == 'repository_dispatch' }}
+        run: |
+          jq -n \
+            --arg env   "${{ github.event.client_payload.environment || 'Development' }}" \
+            --arg app   "${{ github.event.client_payload.azure_webapp_name || '' }}" \
+            --arg ref   "${{ github.event.client_payload.ref || 'main' }}" \
+            --arg rtag  "${{ github.event.client_payload.release_tag || '' }}" \
+            --arg murl  "${{ github.event.client_payload.manifest_url || '' }}" \
+            '{environment:$env, azure_webapp_name:$app, ref:$ref, release_tag:$rtag, manifest_url:$murl}' \
+            > deploy-metadata.json
+        shell: bash
+
+      - name: Upload deploy metadata
+        if: ${{ github.event_name == 'repository_dispatch' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-metadata
+          path: deploy-metadata.json
+          if-no-files-found: ignore
