@@ -2,7 +2,7 @@ name: ci-default
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master" ]   # <-- cambia a "main" si corresponde
   pull_request:
     branches: [ "master" ]
   repository_dispatch:
@@ -20,11 +20,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout (with submodules)
+      - name: Checkout
         uses: actions/checkout@v4
         with:
-          submodules: 'recursive'
-          fetch-depth: 0
+          fetch-depth: 0   # mantiene historial (tags/versión). No hay submódulos.
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
