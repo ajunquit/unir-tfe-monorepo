@@ -2,11 +2,7 @@ name: ci-default
 
 on:
   push:
-    branches: [ "master" ]   # <-- cambia a "main" si corresponde
-  pull_request:
-    branches: [ "master" ]
-  repository_dispatch:
-    types: [ trigger-white-label-pipeline ]
+    branches: [ "master" ] 
 
 permissions:
   contents: read
@@ -14,6 +10,7 @@ permissions:
 
 env:
   DOTNET_VERSION: '8.x'
+  AZURE_WEBAPP_NAME: 'webapp-tfe-unir-monorepo'  # <-- tu App Service real
 
 jobs:
   build_test_publish:
@@ -23,7 +20,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # mantiene historial (tags/versión). No hay submódulos.
+          fetch-depth: 0
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -53,6 +50,8 @@ jobs:
       - name: Test
         run: dotnet test --configuration Release --no-build --verbosity normal
 
+      # TIP: si tu .sln está en la raíz, especifica el proyecto web para evitar publicar otros.
+      # ej: dotnet publish src/UNIR.TFE.Monorepo.WebApp -c Release -o ${{ github.workspace }}/publish
       - name: Publish
         run: dotnet publish -c Release -o ${{ github.workspace }}/publish
 
@@ -62,25 +61,28 @@ jobs:
           name: net-app
           path: ${{ github.workspace }}/publish
           if-no-files-found: error
-          
-      # --- si viene del white-label, empaqueta metadata para el CD ---
-      - name: Export deploy metadata (only for repository_dispatch)
-        if: ${{ github.event_name == 'repository_dispatch' }}
-        run: |
-          jq -n \
-            --arg env   "${{ github.event.client_payload.environment || 'Development' }}" \
-            --arg app   "${{ github.event.client_payload.azure_webapp_name || '' }}" \
-            --arg ref   "${{ github.event.client_payload.ref || 'main' }}" \
-            --arg rtag  "${{ github.event.client_payload.release_tag || '' }}" \
-            --arg murl  "${{ github.event.client_payload.manifest_url || '' }}" \
-            '{environment:$env, azure_webapp_name:$app, ref:$ref, release_tag:$rtag, manifest_url:$murl}' \
-            > deploy-metadata.json
-        shell: bash
 
-      - name: Upload deploy metadata
-        if: ${{ github.event_name == 'repository_dispatch' }}
-        uses: actions/upload-artifact@v4
+  deploy_azure:
+    needs: build_test_publish
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
         with:
-          name: deploy-metadata
-          path: deploy-metadata.json
-          if-no-files-found: ignore
+          name: net-app
+          path: ./deploy   # bajamos el folder publicado aquí
+
+      - name: Azure Login (Service Principal secret)
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # Despliegue a Azure App Service (Linux) usando folder (la acción zipea internamente)
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          package: ./deploy
+          # slot-name: "staging"  # <-- descomenta si quieres desplegar al slot
