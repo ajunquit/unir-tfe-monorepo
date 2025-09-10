@@ -2,7 +2,7 @@ name: ci-default
 
 on:
   push:
-    branches: [ "master" ] 
+    branches: [ "master" ]
 
 permissions:
   contents: read
@@ -10,7 +10,7 @@ permissions:
 
 env:
   DOTNET_VERSION: '8.x'
-  AZURE_WEBAPP_NAME: 'webapp-tfe-unir-monorepo'  # <-- tu App Service real
+  AZURE_WEBAPP_NAME: 'webapp-tfe-unir-monorepo'
 
 jobs:
   build_test_publish:
@@ -39,7 +39,7 @@ jobs:
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
           restore-keys: |
             ${{ runner.os }}-nuget-
-            
+
       - name: Snapshot NuGet packages (pre-restore)
         run: |
           mkdir -p .cache-metrics
@@ -58,8 +58,8 @@ jobs:
       - name: Build
         run: dotnet build --configuration Release --no-restore
 
-      - name: Test
-        run: dotnet test --configuration Release --no-build --verbosity normal
+      - name: Test (with coverage)
+        run: dotnet test --configuration Release --no-build --collect:"XPlat Code Coverage" --verbosity normal
 
       # ---- Cobertura: genera Markdown + HTML y lo agrega al Job Summary ----
       - name: Generate coverage summary
@@ -117,8 +117,7 @@ jobs:
             echo "- **Cache hit estimado:** $pct%"
           } >> $GITHUB_STEP_SUMMARY
 
-      # TIP: si tu .sln está en la raíz, especifica el proyecto web para evitar publicar otros.
-      # ej: dotnet publish src/UNIR.TFE.Monorepo.WebApp -c Release -o ${{ github.workspace }}/publish
+      # ---- Publicación artefacto para CD ----
       - name: Publish
         run: dotnet publish -c Release -o ${{ github.workspace }}/publish
 
@@ -139,17 +138,16 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: net-app
-          path: ./deploy   # bajamos el folder publicado aquí
+          path: ./deploy
 
       - name: Azure Login (Service Principal secret)
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # Despliegue a Azure App Service (Linux) usando folder (la acción zipea internamente)
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           package: ./deploy
-          # slot-name: "staging"  # <-- descomenta si quieres desplegar al slot
+          # slot-name: "staging"
