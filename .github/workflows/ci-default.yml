@@ -59,7 +59,22 @@ jobs:
         run: dotnet build --configuration Release --no-restore
 
       - name: Test (with coverage)
-        run: dotnet test --configuration Release --no-build --collect:"XPlat Code Coverage" --verbosity normal
+        run: |
+          dotnet test --configuration Release --no-build --verbosity normal \
+            --logger "trx;LogFileName=test-results.trx" \
+            --results-directory ./TestResults \
+            --collect:"XPlat Code Coverage"
+
+      # ---- Artefacto: test-results (TRX + Cobertura XML) ----
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            TestResults/**/*.trx
+            TestResults/**/coverage.cobertura.xml
+            **/TestResults/**/coverage.cobertura.xml
 
       # ---- Cobertura: genera Markdown + HTML y lo agrega al Job Summary ----
       - name: Generate coverage summary
