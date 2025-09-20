@@ -1,0 +1,43 @@
+name: cd-azure-deploy
+
+on:
+  workflow_run:
+    workflows: ["ci-default"]   # debe coincidir con `name:` del CI
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  AZURE_WEBAPP_NAME: 'webapp-tfe-unir-monorepo'
+
+jobs:
+  deploy_azure:
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    environment: production   # usa Environment para gates/aprobaciones si quieres
+
+    steps:
+      # Descarga el artefacto `net-app` del run del CI que disparó este workflow
+      - name: Download app artifact from CI
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          workflow: ci-monorepo        # nombre del workflow CI
+          run_id: ${{ github.event.workflow_run.id }}
+          name: net-app
+          path: ./deploy
+
+      - name: Azure Login (Service Principal secret)
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          package: ./deploy
+          # slot-name: "staging"
