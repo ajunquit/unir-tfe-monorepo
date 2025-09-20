@@ -2,7 +2,10 @@ name: ci-default
 
 on:
   push:
-    branches: [ "master" ]
+    branches: ["master"]
+  pull_request:
+    branches: ["master"]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -10,45 +13,35 @@ permissions:
 
 env:
   DOTNET_VERSION: '8.x'
-  AZURE_WEBAPP_NAME: 'webapp-tfe-unir-monorepo'
 
 jobs:
   build_test_publish:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
           source-url: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
         env:
           NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # ---- Cache NuGet + snapshot previo (para estimar cache hit %) ----
       - name: Cache NuGet
         id: nuget_cache
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-nuget-
+          restore-keys: ${{ runner.os }}-nuget-
 
-      - name: Snapshot NuGet packages (pre-restore)
+      - name: Snapshot NuGet (pre-restore)
         run: |
           mkdir -p .cache-metrics
           find ~/.nuget/packages -maxdepth 2 -mindepth 2 -type d 2>/dev/null \
-            | sed 's#.*/packages/##' \
-            | tr '[:upper:]' '[:lower:]' \
-            | sort > .cache-metrics/pre.txt || true
+            | sed 's#.*/packages/##' | tr '[:upper:]' '[:lower:]' | sort > .cache-metrics/pre.txt || true
 
-      # ---- Restore, Build, Test con cobertura ----
       - name: Restore
         run: |
           dotnet restore \
@@ -56,16 +49,16 @@ jobs:
             --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build -c Release --no-restore
 
       - name: Test (with coverage)
         run: |
-          dotnet test --configuration Release --no-build --verbosity normal \
+          dotnet test -c Release --no-build --verbosity normal \
             --logger "trx;LogFileName=test-results.trx" \
             --results-directory ./TestResults \
             --collect:"XPlat Code Coverage"
 
-      # ---- Artefacto: test-results (TRX + Cobertura XML) ----
+      # ---- Artefacto de resultados de pruebas ----
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
@@ -73,10 +66,9 @@ jobs:
           name: test-results
           path: |
             TestResults/**/*.trx
-            TestResults/**/coverage.cobertura.xml
             **/TestResults/**/coverage.cobertura.xml
 
-      # ---- Cobertura: genera Markdown + HTML y lo agrega al Job Summary ----
+      # ---- Cobertura: resumen + HTML ----
       - name: Generate coverage summary
         uses: danielpalme/ReportGenerator-GitHub-Action@v5
         with:
@@ -95,74 +87,33 @@ jobs:
           name: coverage-html
           path: coveragereport
 
-      # ---- Estimar Cache hit % real (paquetes requeridos vs ya presentes) ----
+      # (opcional) métrica de cache hit:
       - name: Compute NuGet cache hit %
-        id: cache_metrics
         run: |
           SOLUTION=$(ls *.sln | head -n 1)
           dotnet list "$SOLUTION" package --include-transitive --format json > .cache-metrics/list.json
-
-          # Paquetes requeridos (id/version) únicos
           jq -r '
-            [.projects[].frameworks[]
-              | (.topLevelPackages + .transitivePackages // [])
-              | .[] | "\(.id | ascii_downcase)/\(.resolvedVersion | ascii_downcase)"
-            ] | unique | .[]' .cache-metrics/list.json > .cache-metrics/required.txt
-
-          # Presentes antes del restore (desde el cache action)
+            [.projects[].frameworks[] | (.topLevelPackages + .transitivePackages // []) | .[]
+             | "\(.id | ascii_downcase)/\(.resolvedVersion | ascii_downcase)"] | unique | .[]' \
+             .cache-metrics/list.json > .cache-metrics/required.txt
           comm -12 .cache-metrics/pre.txt .cache-metrics/required.txt > .cache-metrics/hit.txt || true
-
-          total=$(wc -l < .cache-metrics/required.txt | tr -d ' ')
-          hits=$(wc -l < .cache-metrics/hit.txt | tr -d ' ')
-          pct=0
-          if [ "$total" -gt 0 ]; then
-            pct=$(awk -v h="$hits" -v t="$total" 'BEGIN{printf("%.0f", (h*100.0)/t)}')
-          fi
-
-          echo "total=$total" >> $GITHUB_OUTPUT
-          echo "hits=$hits" >> $GITHUB_OUTPUT
-          echo "pct=$pct" >> $GITHUB_OUTPUT
-
+          total=$(wc -l < .cache-metrics/required.txt | tr -d ' '); hits=$(wc -l < .cache-metrics/hit.txt | tr -d ' ')
+          pct=0; if [ "$total" -gt 0 ]; then pct=$(awk -v h="$hits" -v t="$total" 'BEGIN{printf("%.0f",(h*100.0)/t)}'); fi
           {
             echo "## Cache NuGet"
-            echo ""
             echo "- Acción cache: **${{ steps.nuget_cache.outputs.cache-hit == 'true' && 'HIT' || 'MISS' }}**"
             echo "- Paquetes requeridos: **$total**"
-            echo "- Presentes desde caché (pre-restore): **$hits**"
+            echo "- Presentes desde caché: **$hits**"
             echo "- **Cache hit estimado:** $pct%"
           } >> $GITHUB_STEP_SUMMARY
 
-      # ---- Publicación artefacto para CD ----
+      # ---- Publicar artefacto para CD ----
       - name: Publish
         run: dotnet publish -c Release -o ${{ github.workspace }}/publish
 
-      - name: Upload artifact
+      - name: Upload app artifact
         uses: actions/upload-artifact@v4
         with:
           name: net-app
           path: ${{ github.workspace }}/publish
           if-no-files-found: error
-
-  deploy_azure:
-    needs: build_test_publish
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: net-app
-          path: ./deploy
-
-      - name: Azure Login (Service Principal secret)
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: ${{ env.AZURE_WEBAPP_NAME }}
-          package: ./deploy
-          # slot-name: "staging"
